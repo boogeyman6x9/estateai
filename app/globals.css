@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ---- EstateAI design tokens ---- */
+  /* Paper: cool, neutral warmth — deliberately not the cream/terracotta AI default */
+  --paper: #f6f6f3;
+  --paper-dim: #eeede6;
+  --ink: #14171f;
+  --ink-soft: #4a4f5c;
+  --line: #dedcd2;
+
+  /* Brand: deep ink-navy, used with restraint */
+  --navy-950: #0a0f1e;
+  --navy-900: #101c3a;
+  --navy-800: #182a52;
+  --navy-700: #223a6b;
+  --navy-100: #e7eaf3;
+
+  /* Lead-temperature system — the product's real signature motif */
+  --hot: #c4432b;
+  --hot-soft: #f7e3de;
+  --warm: #b9832a;
+  --warm-soft: #f5ecd9;
+  --cold: #4c6fa5;
+  --cold-soft: #e3e9f3;
+  --positive: #2f6b4f;
+  --positive-soft: #dfeee5;
+
+  --radius: 0.5rem;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--navy-900);
+  --primary-foreground: #ffffff;
+  --secondary: var(--paper-dim);
+  --secondary-foreground: var(--navy-900);
+  --muted: var(--paper-dim);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--navy-100);
+  --accent-foreground: var(--navy-900);
+  --destructive: var(--hot);
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--navy-700);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-navy-950: var(--navy-950);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-navy-100: var(--navy-100);
+
+  --color-hot: var(--hot);
+  --color-hot-soft: var(--hot-soft);
+  --color-warm: var(--warm);
+  --color-warm-soft: var(--warm-soft);
+  --color-cold: var(--cold);
+  --color-cold-soft: var(--cold-soft);
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+.dark {
+  --background: var(--navy-950);
+  --foreground: #f2f2ee;
+  --card: var(--navy-900);
+  --card-foreground: #f2f2ee;
+  --popover: var(--navy-900);
+  --popover-foreground: #f2f2ee;
+  --primary: #ffffff;
+  --primary-foreground: var(--navy-950);
+  --secondary: var(--navy-800);
+  --secondary-foreground: #f2f2ee;
+  --muted: var(--navy-800);
+  --muted-foreground: #a9afc0;
+  --accent: var(--navy-800);
+  --accent-foreground: #ffffff;
+  --border: var(--navy-800);
+  --input: var(--navy-800);
+  --ring: #a9afc0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
