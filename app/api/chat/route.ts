@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { chatRequestSchema } from "@/lib/validation/chat";
 import { getOrCreateConversation, runConversationTurn } from "@/lib/ai/conversation-engine";
-import { isTrialExpired } from "@/lib/subscription";
+import { isAccessLocked } from "@/lib/subscription";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { Database } from "@/types/database";
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     .eq("id", agencyId)
     .maybeSingle();
   if (!agency) return json({ error: "Unknown agency" }, 404);
-  if (isTrialExpired(agency)) return json({ error: "Chat is currently unavailable" }, 503);
+  if (isAccessLocked(agency)) return json({ error: "Chat is currently unavailable" }, 503);
 
   const { data: aiSettingsRow } = await supabase
     .from("ai_settings")

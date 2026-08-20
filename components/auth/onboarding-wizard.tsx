@@ -21,16 +21,18 @@ import { createAgencyAction, type ActionResult } from "@/lib/actions/auth";
 import { updateOwnerDetailsAction, updateAiAssistantBasicsAction } from "@/lib/actions/onboarding";
 import { inviteAgentAction } from "@/lib/actions/agents";
 import { createPropertyAction } from "@/lib/actions/properties";
+import { createOnboardingCheckoutSessionAction } from "@/lib/actions/billing";
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 const STEP_TITLES: Record<number, string> = {
   1: "Welcome to EstateAI",
   2: "Your agency",
-  3: "Your details",
-  4: "Add your first agent",
-  5: "Add your first listing",
-  6: "Configure your AI assistant",
-  7: "You're all set",
+  3: "Choose your plan",
+  4: "Your details",
+  5: "Add your first agent",
+  6: "Add your first listing",
+  7: "Configure your AI assistant",
+  8: "You're all set",
 };
 
 const initialState: ActionResult = {};
@@ -58,17 +60,23 @@ function useStepAdvance(state: ActionResult, onSuccess: () => void) {
 export function OnboardingWizard({
   fullName,
   hasAgency,
+  hasSubscription,
+  billingCancelled,
 }: {
   fullName: string | null;
   hasAgency: boolean;
+  hasSubscription: boolean;
+  billingCancelled: boolean;
 }) {
   // hasAgency means this user already has an agency — either they finished the
   // wizard before and navigated back here directly, or (mid-wizard) a server
   // action's revalidatePath caused this Server Component to re-render with
   // fresh props. Either way, useState's initializer only runs on first mount,
   // so an in-progress wizard's step is never reset by that re-render — this
-  // only decides where a *fresh* mount starts.
-  const [step, setStep] = useState(hasAgency ? 7 : 1);
+  // only decides where a *fresh* mount starts. An agency with no subscription
+  // yet (including a return trip from a cancelled Stripe Checkout) always
+  // lands back on the plan step — it's mandatory, unlike every step after it.
+  const [step, setStep] = useState(!hasAgency ? 1 : hasSubscription ? TOTAL_STEPS : 3);
   const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
 
   const [agencyState, agencyAction, agencyPending] = useActionState(createAgencyAction, initialState);
@@ -76,6 +84,14 @@ export function OnboardingWizard({
   const [agentState, agentAction, agentPending] = useActionState(inviteAgentAction, initialState);
   const [propertyState, propertyAction, propertyPending] = useActionState(createPropertyAction, initialState);
   const [aiState, aiAction, aiPending] = useActionState(updateAiAssistantBasicsAction, initialState);
+  const [starterState, starterAction, starterPending] = useActionState(
+    createOnboardingCheckoutSessionAction.bind(null, "starter"),
+    initialState
+  );
+  const [professionalState, professionalAction, professionalPending] = useActionState(
+    createOnboardingCheckoutSessionAction.bind(null, "professional"),
+    initialState
+  );
 
   useStepAdvance(agencyState, next);
   useStepAdvance(ownerState, next);
@@ -172,6 +188,68 @@ export function OnboardingWizard({
         )}
 
         {step === 3 && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Pick a plan to start your 2-day free trial. We need a card on file to activate it —
+              you won&apos;t be charged until the trial ends, and you can cancel anytime from
+              Settings before then.
+            </p>
+            {billingCancelled && (
+              <p className="text-sm text-hot" role="alert">
+                Checkout was cancelled — pick a plan below to try again.
+              </p>
+            )}
+
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border p-4">
+                <div className="flex items-baseline justify-between">
+                  <span className="font-display text-lg font-semibold text-navy-950">Starter</span>
+                  <span className="text-sm text-muted-foreground">$299/month</span>
+                </div>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                  <li>Up to 200 AI conversations/mo</li>
+                  <li>Up to 50 active listings</li>
+                  <li>Core lead scoring</li>
+                  <li>Email support</li>
+                </ul>
+                <form action={starterAction} className="mt-3">
+                  <Button type="submit" variant="outline" className="w-full" disabled={starterPending || professionalPending}>
+                    {starterPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Continue with Starter
+                  </Button>
+                </form>
+              </div>
+
+              <div className="rounded-lg border-2 border-navy-900 p-4">
+                <div className="flex items-baseline justify-between">
+                  <span className="font-display text-lg font-semibold text-navy-950">Professional</span>
+                  <span className="text-sm text-muted-foreground">$699/month</span>
+                </div>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                  <li>Up to 1,000 AI conversations/mo</li>
+                  <li>Unlimited active listings</li>
+                  <li>Automated follow-ups</li>
+                  <li>AI marketing content</li>
+                  <li>Priority support</li>
+                </ul>
+                <form action={professionalAction} className="mt-3">
+                  <Button type="submit" className="w-full" disabled={starterPending || professionalPending}>
+                    {professionalPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Continue with Professional
+                  </Button>
+                </form>
+              </div>
+            </div>
+
+            {(starterState?.error || professionalState?.error) && (
+              <p className="text-sm text-hot" role="alert">
+                {starterState?.error || professionalState?.error}
+              </p>
+            )}
+          </div>
+        )}
+
+        {step === 4 && (
           <form action={ownerAction} className="space-y-4">
             <p className="text-sm text-muted-foreground">
               A few details for your own profile — you&apos;re set up as the Principal agent.
@@ -204,7 +282,7 @@ export function OnboardingWizard({
           </form>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <form action={agentAction} className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Invite a teammate now, or skip and do it later from Agents.
@@ -240,7 +318,7 @@ export function OnboardingWizard({
           </form>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <form action={propertyAction} className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Add your first listing so the AI assistant has something real to talk about, or
@@ -314,7 +392,7 @@ export function OnboardingWizard({
           </form>
         )}
 
-        {step === 6 && (
+        {step === 7 && (
           <form action={aiAction} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -369,7 +447,7 @@ export function OnboardingWizard({
           </form>
         )}
 
-        {step === 7 && (
+        {step === 8 && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Your agency is set up and your AI assistant is ready to start qualifying leads.

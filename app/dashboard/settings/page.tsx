@@ -2,7 +2,7 @@ import { AlertTriangle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAgencyContext } from "@/lib/dashboard-context";
-import { isTrialExpired } from "@/lib/subscription";
+import { isAccessLocked } from "@/lib/subscription";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AgencyDetailsForm } from "@/components/dashboard/agency-details-form";
@@ -19,7 +19,7 @@ export default async function SettingsPage({
   // The one page an expired-trial agency must still reach — see
   // app/dashboard/layout.tsx and lib/dashboard-context.ts for the lockout.
   const { agency, profile } = await requireAgencyContext({ allowExpiredTrial: true });
-  const { trial, tab } = await searchParams;
+  const { tab } = await searchParams;
   const supabase = await createClient();
 
   const { data: aiSettings } = await supabase
@@ -31,8 +31,12 @@ export default async function SettingsPage({
   const readOnly = profile.role !== "owner";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const embedSnippet = `<script src="${appUrl}/widget.js" data-agency-id="${agency.id}" async></script>`;
-  const trialLocked = trial === "expired" && isTrialExpired(agency);
-  const defaultTab = trialLocked || tab === "billing" ? "billing" : "agency";
+  // Computed from the agency itself, not the `trial` query param — that param
+  // is only a UX hint for which tab to default to after a redirect. Someone
+  // navigating here directly while locked must see the same lockout.
+  const locked = isAccessLocked(agency);
+  const canceled = agency.subscription_status === "canceled";
+  const defaultTab = locked || tab === "billing" ? "billing" : "agency";
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -45,15 +49,18 @@ export default async function SettingsPage({
         </p>
       </div>
 
-      {trialLocked && (
+      {locked && (
         <Card className="border-hot bg-hot-soft">
           <CardContent className="flex items-start gap-3 p-4">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-hot" />
             <div>
-              <p className="text-sm font-semibold text-hot">Your trial has ended</p>
+              <p className="text-sm font-semibold text-hot">
+                {canceled ? "Your subscription was canceled" : "Your trial has ended"}
+              </p>
               <p className="mt-1 text-sm text-ink-soft">
-                The rest of your dashboard is locked until you subscribe. Pick a plan below to
-                pick up right where you left off — your data is safe and untouched.
+                {canceled
+                  ? "The rest of your dashboard is locked. Resubscribe below to pick up right where you left off — your data is safe and untouched."
+                  : "The rest of your dashboard is locked until you subscribe. Pick a plan below to pick up right where you left off — your data is safe and untouched."}
               </p>
             </div>
           </CardContent>
@@ -68,21 +75,21 @@ export default async function SettingsPage({
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="agency">
-          {trialLocked ? (
+          {locked ? (
             <LockedTabNotice />
           ) : (
             <AgencyDetailsForm agency={agency} readOnly={readOnly} />
           )}
         </TabsContent>
         <TabsContent value="ai">
-          {trialLocked ? (
+          {locked ? (
             <LockedTabNotice />
           ) : (
             aiSettings && <AiSettingsForm settings={aiSettings} readOnly={readOnly} />
           )}
         </TabsContent>
         <TabsContent value="widget" className="space-y-4">
-          {trialLocked ? (
+          {locked ? (
             <LockedTabNotice />
           ) : (
             <>

@@ -35,31 +35,30 @@ const PLANS: {
   {
     id: "starter",
     name: "Starter",
-    price: "$99/mo",
-    features: ["Up to 100 active leads", "AI website chat assistant", "Lead scoring & qualification", "1 agent seat"],
+    price: "$299/mo",
+    features: ["Up to 200 AI conversations/mo", "Up to 50 active listings", "Core lead scoring", "Email support"],
   },
   {
     id: "professional",
     name: "Professional",
-    price: "$249/mo",
+    price: "$699/mo",
     features: [
-      "Up to 500 active leads",
-      "Everything in Starter",
-      "AI marketing content generation",
+      "Up to 1,000 AI conversations/mo",
+      "Unlimited active listings",
       "Automated follow-ups",
-      "5 agent seats",
+      "AI marketing content",
+      "Priority support",
     ],
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "Contact us",
+    price: "Custom",
     features: [
-      "Unlimited leads",
-      "Everything in Professional",
-      "Unlimited agent seats",
-      "Priority support",
+      "Unlimited conversations",
+      "Multi-office support",
       "Custom integrations",
+      "Dedicated success manager",
     ],
   },
 ];
@@ -138,7 +137,10 @@ export function BillingCard({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {PLANS.map((plan) => {
-          const isCurrent = plan.id === currentPlan;
+          // A canceled subscription isn't "current" on any plan anymore —
+          // otherwise the card for their old plan would show a disabled
+          // "Current plan" button instead of letting them resubscribe to it.
+          const isCurrent = plan.id === currentPlan && status !== "canceled";
           return (
             <Card key={plan.id} className={cn(isCurrent && "border-navy-900 ring-1 ring-navy-900")}>
               <CardHeader>
@@ -170,7 +172,10 @@ export function BillingCard({
                   </Button>
                 )}
                 {!readOnly && !isCurrent && plan.id !== "enterprise" && (
-                  <CheckoutButton plan={plan.id} label="Switch plan" />
+                  <CheckoutButton
+                    plan={plan.id}
+                    label={status === "canceled" ? "Resubscribe" : "Switch plan"}
+                  />
                 )}
               </CardContent>
             </Card>

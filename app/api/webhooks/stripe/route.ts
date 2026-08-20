@@ -68,10 +68,14 @@ export async function POST(request: Request) {
         stripe_subscription_id: string;
         subscription_status: SubscriptionStatus;
         subscription_plan?: SubscriptionPlan;
+        trial_ends_at?: string | null;
       } = {
         stripe_customer_id: session.customer as string,
         stripe_subscription_id: subscription.id,
         subscription_status: mapStripeStatus(subscription.status),
+        trial_ends_at: subscription.trial_end
+          ? new Date(subscription.trial_end * 1000).toISOString()
+          : null,
       };
       if (plan) update.subscription_plan = plan;
 
@@ -90,8 +94,12 @@ export async function POST(request: Request) {
         subscription_status: SubscriptionStatus;
         subscription_plan?: SubscriptionPlan;
         stripe_subscription_id?: null;
+        trial_ends_at?: string | null;
       } = {
         subscription_status: mapStripeStatus(subscription.status),
+        trial_ends_at: subscription.trial_end
+          ? new Date(subscription.trial_end * 1000).toISOString()
+          : null,
       };
       if (plan) update.subscription_plan = plan;
       if (event.type === "customer.subscription.deleted") update.stripe_subscription_id = null;

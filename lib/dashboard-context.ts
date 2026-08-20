@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { isTrialExpired } from "@/lib/subscription";
+import { isAccessLocked } from "@/lib/subscription";
 import type { Database } from "@/types/database";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -9,13 +9,18 @@ type Agency = Database["public"]["Tables"]["agencies"]["Row"];
 
 /**
  * `allowExpiredTrial` — pass `true` only from the one place a locked-out
- * agency still needs to reach: Settings (so they can actually pay). Every
- * other page/action calls this with the default, so an expired trial gets
- * redirected to Settings automatically, server-enforced — not just hidden
- * in the UI.
+ * agency still needs to reach: Settings (so they can actually pay or
+ * resubscribe). Every other page/action calls this with the default, so an
+ * expired trial or a fully canceled subscription gets redirected to Settings
+ * automatically, server-enforced — not just hidden in the UI.
+ *
+ * `allowIncompleteBilling` — pass `true` only from the onboarding checkout
+ * action itself. Every other caller uses the default, which sends an agency
+ * that's still `trialing` with no `stripe_subscription_id` (i.e. never
+ * finished entering a card) back to `/onboarding` instead of the dashboard.
  */
 export async function requireAgencyContext(
-  options: { allowExpiredTrial?: boolean } = {}
+  options: { allowExpiredTrial?: boolean; allowIncompleteBilling?: boolean } = {}
 ): Promise<{
   profile: Profile;
   agency: Agency;
@@ -44,7 +49,15 @@ export async function requireAgencyContext(
 
   if (!agency) redirect("/onboarding");
 
-  if (!options.allowExpiredTrial && isTrialExpired(agency)) {
+  if (
+    !options.allowIncompleteBilling &&
+    agency.subscription_status === "trialing" &&
+    !agency.stripe_subscription_id
+  ) {
+    redirect("/onboarding");
+  }
+
+  if (!options.allowExpiredTrial && isAccessLocked(agency)) {
     redirect("/dashboard/settings?trial=expired");
   }
 
