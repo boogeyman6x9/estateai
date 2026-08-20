@@ -315,6 +315,14 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["lead_events"]["Row"]>;
         Relationships: [];
       };
+      rate_limit_counters: {
+        Row: { bucket_key: string; window_start: string; count: number };
+        Insert: Partial<Database["public"]["Tables"]["rate_limit_counters"]["Row"]> & {
+          bucket_key: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["rate_limit_counters"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -325,6 +333,10 @@ export interface Database {
       attach_invited_agent: {
         Args: { invited_profile_id: string; agent_title?: string | null };
         Returns: Database["public"]["Tables"]["agents"]["Row"];
+      };
+      check_rate_limit: {
+        Args: { p_key: string; p_window_seconds: number; p_max_requests: number };
+        Returns: boolean;
       };
     };
     Enums: Record<string, never>;

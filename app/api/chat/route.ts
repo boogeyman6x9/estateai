@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { chatRequestSchema } from "@/lib/validation/chat";
 import { getOrCreateConversation, runConversationTurn } from "@/lib/ai/conversation-engine";
 import { isTrialExpired } from "@/lib/subscription";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { Database } from "@/types/database";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
@@ -35,6 +36,18 @@ export async function OPTIONS() {
  * only happen through the admin client running on the server.
  */
 export async function POST(request: Request) {
+  const supabase = await createAdminClient();
+
+  // Checked before even parsing the body — cheapest possible reject for a
+  // client hammering this public, credential-free endpoint.
+  const allowed = await checkRateLimit(supabase, `chat:${getClientIp(request)}`, {
+    windowSeconds: 60,
+    maxRequests: 10,
+  });
+  if (!allowed) {
+    return json({ error: "Too many messages — please wait a moment and try again." }, 429);
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -47,8 +60,6 @@ export async function POST(request: Request) {
     return json({ error: parsed.error.issues[0]?.message ?? "Invalid request" }, 400);
   }
   const { agencyId, conversationId, propertyId, message, lead: leadInput } = parsed.data;
-
-  const supabase = await createAdminClient();
 
   const { data: agency } = await supabase
     .from("agencies")
