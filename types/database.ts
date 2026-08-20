@@ -20,6 +20,9 @@ export interface Database {
           timezone: string;
           subscription_plan: "starter" | "professional" | "enterprise";
           subscription_status: "trialing" | "active" | "past_due" | "canceled";
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          trial_ends_at: string | null;
           created_at: string;
           updated_at: string;
         };

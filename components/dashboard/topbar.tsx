@@ -26,6 +26,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/lib/actions/auth";
 import { NAV_ITEMS } from "./nav-items";
+import { NotificationsBell } from "./notifications-bell";
+import type { Notification } from "@/lib/notifications";
 
 function initials(name: string) {
   return name
@@ -39,9 +41,11 @@ function initials(name: string) {
 export function Topbar({
   userName,
   userEmail,
+  notifications,
 }: {
   userName: string;
   userEmail: string;
+  notifications: Notification[];
 }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
@@ -66,34 +70,37 @@ export function Topbar({
         <h1 className="font-display text-lg font-semibold text-navy-900">{pageTitle}</h1>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Avatar>
-              <AvatarFallback>{initials(userName)}</AvatarFallback>
-            </Avatar>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>
-            <p className="font-medium">{userName}</p>
-            <p className="font-normal text-muted-foreground">{userEmail}</p>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">Account settings</Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <form action={logoutAction}>
+      <div className="flex items-center gap-1">
+        <NotificationsBell notifications={notifications} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <Avatar>
+                <AvatarFallback>{initials(userName)}</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              <p className="font-medium">{userName}</p>
+              <p className="font-normal text-muted-foreground">{userEmail}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <button type="submit" className="flex w-full items-center gap-2 text-hot">
-                <LogOut className="h-4 w-4" />
-                Log out
-              </button>
+              <Link href="/dashboard/settings">Account settings</Link>
             </DropdownMenuItem>
-          </form>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuSeparator />
+            <form action={logoutAction}>
+              <DropdownMenuItem asChild>
+                <button type="submit" className="flex w-full items-center gap-2 text-hot">
+                  <LogOut className="h-4 w-4" />
+                  Log out
+                </button>
+              </DropdownMenuItem>
+            </form>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <Dialog open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <DialogContent className="max-w-xs p-0">

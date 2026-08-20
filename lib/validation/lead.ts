@@ -10,6 +10,7 @@ export const leadStatusEnum = z.enum([
 export const financeStatusEnum = z.enum([
   "unknown", "not_started", "in_progress", "pre_approved", "cash_buyer",
 ]);
+export const leadPurposeEnum = z.enum(["owner_occupier", "investment", "unknown"]);
 
 export const leadSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -25,6 +26,7 @@ export const leadSchema = z.object({
   bedrooms_required: z.coerce.number().int().min(0).optional(),
   finance_status: financeStatusEnum.default("unknown"),
   purchase_timeline: z.string().optional(),
+  purpose: leadPurposeEnum.default("unknown"),
   source: z.string().default("manual"),
 });
 export type LeadInput = z.infer<typeof leadSchema>;

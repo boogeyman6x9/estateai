@@ -4,6 +4,7 @@ import {
   Users,
   Building2,
   UserSquare2,
+  BarChart3,
   Settings,
 } from "lucide-react";
 
@@ -18,5 +19,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Leads", href: "/dashboard/leads", icon: Users },
   { label: "Properties", href: "/dashboard/properties", icon: Building2 },
   { label: "Agents", href: "/dashboard/agents", icon: UserSquare2 },
+  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];

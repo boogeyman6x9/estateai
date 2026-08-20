@@ -12,3 +12,11 @@ export const aiSettingsSchema = z.object({
   custom_instructions: z.string().max(2000).optional(),
 });
 export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
+
+export const aiAssistantBasicsSchema = z.object({
+  assistant_name: z.string().min(1, "Give your assistant a name"),
+  personality: z.enum(["professional", "friendly", "premium", "casual"]),
+  greeting: z.string().min(1, "Write a greeting message"),
+  custom_instructions: z.string().max(2000).optional(),
+});
+export type AiAssistantBasicsInput = z.infer<typeof aiAssistantBasicsSchema>;

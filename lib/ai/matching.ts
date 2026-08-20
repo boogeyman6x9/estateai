@@ -5,7 +5,7 @@ import type { PropertyContext, PropertyMatchCriteria } from "./types";
 
 type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 
-function toPropertyContext(row: PropertyRow): PropertyContext {
+export function toPropertyContext(row: PropertyRow): PropertyContext {
   return {
     id: row.id,
     title: row.title,

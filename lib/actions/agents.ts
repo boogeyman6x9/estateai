@@ -62,6 +62,14 @@ export async function toggleAgentActiveAction(agentId: string, active: boolean) 
   if (profile.role !== "owner") return;
 
   const supabase = await createClient();
-  await supabase.from("agents").update({ active }).eq("id", agentId).eq("agency_id", agency.id);
+  const { error } = await supabase
+    .from("agents")
+    .update({ active })
+    .eq("id", agentId)
+    .eq("agency_id", agency.id);
+  if (error) {
+    console.error("Failed to toggle agent active state", error);
+    return;
+  }
   revalidatePath("/dashboard/agents");
 }

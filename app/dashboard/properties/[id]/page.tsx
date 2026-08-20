@@ -3,8 +3,13 @@ import { BedDouble, Bath, Car, MapPin } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAgencyContext } from "@/lib/dashboard-context";
+import { hasProFeatures } from "@/lib/subscription";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EditPropertyDialog } from "@/components/dashboard/edit-property-dialog";
+import { PropertyImagesCard } from "@/components/dashboard/property-images-card";
+import { WithdrawPropertyButton } from "@/components/dashboard/withdraw-property-button";
+import { GenerateMarketingDialog } from "@/components/dashboard/generate-marketing-dialog";
 
 export default async function PropertyDetailPage({
   params,
@@ -32,20 +37,33 @@ export default async function PropertyDetailPage({
 
   const features = Array.isArray(property.features) ? (property.features as string[]) : [];
 
+  const images = Array.isArray(property.images) ? (property.images as string[]) : [];
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <Badge variant={property.status === "active" ? "positive" : "secondary"}>
-          {property.status.replace("_", " ")}
-        </Badge>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-navy-950">
-          {property.title}
-        </h1>
-        <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          {property.address}, {property.suburb} {property.state} {property.postcode}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <Badge variant={property.status === "active" ? "positive" : "secondary"}>
+            {property.status.replace("_", " ")}
+          </Badge>
+          <h1 className="mt-2 font-display text-2xl font-semibold text-navy-950">
+            {property.title}
+          </h1>
+          <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            {property.address}, {property.suburb} {property.state} {property.postcode}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <GenerateMarketingDialog propertyId={property.id} locked={!hasProFeatures(agency)} />
+          <EditPropertyDialog property={property} />
+          {property.status !== "withdrawn" && (
+            <WithdrawPropertyButton propertyId={property.id} />
+          )}
+        </div>
       </div>
+
+      <PropertyImagesCard propertyId={property.id} images={images} />
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-6 p-6">

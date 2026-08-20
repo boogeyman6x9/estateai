@@ -35,5 +35,15 @@ export const createAgencySchema = z.object({
     .string()
     .min(2, "Enter a URL slug")
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers and hyphens only"),
+  agencyPhone: z.string().optional(),
+  agencyEmail: z.string().email().optional().or(z.literal("")),
+  agencyWebsite: z.string().optional(),
+  agencyAddress: z.string().optional(),
 });
 export type CreateAgencyInput = z.infer<typeof createAgencySchema>;
+
+export const ownerDetailsSchema = z.object({
+  phone: z.string().optional(),
+  title: z.string().optional(),
+});
+export type OwnerDetailsInput = z.infer<typeof ownerDetailsSchema>;

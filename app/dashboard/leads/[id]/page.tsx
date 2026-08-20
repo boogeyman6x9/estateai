@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { TemperatureBadge } from "@/components/dashboard/temperature-badge";
 import { LeadStatusSelect } from "@/components/dashboard/lead-status-select";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { SendLeadMessageForm } from "@/components/dashboard/send-lead-message-form";
+import { LeadSummaryCard } from "@/components/dashboard/lead-summary-card";
+import { EditLeadDialog } from "@/components/dashboard/edit-lead-dialog";
 import { MessagesSquare, Clock3 } from "lucide-react";
 
 const EVENT_LABEL: Record<string, string> = {
@@ -44,22 +47,39 @@ export default async function LeadDetailPage({
 
   if (!lead) notFound();
 
-  const [{ data: conversations }, { data: events }] = await Promise.all([
-    supabase
-      .from("conversations")
-      .select("id")
-      .eq("agency_id", agency.id)
-      .eq("lead_id", lead.id)
-      .order("created_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("lead_events")
-      .select("*")
-      .eq("agency_id", agency.id)
-      .eq("lead_id", lead.id)
-      .order("created_at", { ascending: false })
-      .limit(20),
-  ]);
+  const [{ data: conversations }, { data: events }, { data: agentRows }, { data: properties }] =
+    await Promise.all([
+      supabase
+        .from("conversations")
+        .select("id")
+        .eq("agency_id", agency.id)
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("lead_events")
+        .select("*")
+        .eq("agency_id", agency.id)
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("agents")
+        .select("id, title, profile_id, profiles(full_name, email)")
+        .eq("agency_id", agency.id)
+        .eq("active", true),
+      supabase
+        .from("properties")
+        .select("id, title")
+        .eq("agency_id", agency.id)
+        .neq("status", "withdrawn")
+        .order("created_at", { ascending: false }),
+    ]);
+
+  const agents = (agentRows ?? []).map((a) => {
+    const p = Array.isArray(a.profiles) ? a.profiles[0] : a.profiles;
+    return { id: a.id, label: p?.full_name ?? p?.email ?? a.title ?? "Agent" };
+  });
 
   const conversationId = conversations?.[0]?.id;
   const { data: messages } = conversationId
@@ -100,6 +120,11 @@ export default async function LeadDetailPage({
           </div>
           <div className="flex items-center gap-2">
             <LeadStatusSelect leadId={lead.id} status={lead.status} />
+            <EditLeadDialog
+              lead={lead}
+              agents={agents}
+              properties={(properties ?? []).map((p) => ({ id: p.id, title: p.title }))}
+            />
             <Button variant="outline" size="icon" aria-label="Schedule inspection">
               <CalendarPlus className="h-4 w-4" />
             </Button>
@@ -149,7 +174,7 @@ export default async function LeadDetailPage({
               <EmptyState
                 icon={MessagesSquare}
                 title="No conversation yet"
-                description="Messages from the website chat widget or agent notes will appear here."
+                description="Send a message below to test the AI assistant, or wait for the website chat widget to create one."
               />
             ) : (
               <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
@@ -170,9 +195,12 @@ export default async function LeadDetailPage({
                   ))}
               </div>
             )}
+            <SendLeadMessageForm leadId={lead.id} />
           </CardContent>
         </Card>
       </div>
+
+      <LeadSummaryCard leadId={lead.id} hasMessages={!!messages && messages.length > 0} />
 
       <Card>
         <CardHeader>

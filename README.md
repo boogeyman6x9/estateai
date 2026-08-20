@@ -196,7 +196,34 @@ For anything beyond a demo, use **separate Supabase projects for local dev
 and production** rather than pointing Vercel at the same project you develop
 against — otherwise local testing writes real rows into your prod database.
 
-## 7. Project structure
+## 7. Testing
+
+```bash
+npm test          # run once
+npm run test:watch
+```
+
+Vitest, three suites:
+
+- `lib/ai/scoring.test.ts` — pure unit tests for the lead-scoring engine. No
+  network, no credentials, runs anywhere.
+- `lib/ai/matching.test.ts` — integration tests for property matching against
+  a real Postgres instance (creates a throwaway test agency + properties,
+  asserts filtering, cleans up in `afterAll`).
+- `tests/rls-tenant-isolation.test.ts` — automated version of the manual
+  tenant-isolation validation described in section 5: two real agency
+  signups through `create_agency_for_current_user()`, then a cross-tenant
+  read attempt that must return zero rows, enforced by RLS itself.
+
+The two integration suites need real Supabase credentials
+(`SUPABASE_SERVICE_ROLE_KEY` + `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` in
+`.env.local`) and talk to whichever project those point at — they
+`describe.skipIf` themselves out cleanly if credentials aren't present. Run
+them against a dev/test Supabase project, not production, since they create
+and delete real rows (test data is clearly namespaced and always cleaned up,
+but there's no reason to point them at prod).
+
+## 8. Project structure
 
 ```
 app/                  Routes (App Router)

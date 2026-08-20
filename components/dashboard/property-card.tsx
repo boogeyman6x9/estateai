@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { BedDouble, Bath, Car, MapPin } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,11 +18,18 @@ const STATUS_LABEL: Record<Property["status"], string> = {
 };
 
 export function PropertyCard({ property }: { property: Property }) {
+  const images = Array.isArray(property.images) ? (property.images as string[]) : [];
+  const thumbnail = images[0];
+
   return (
     <Link href={`/dashboard/properties/${property.id}`}>
       <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
-        <div className="flex h-36 items-center justify-center bg-navy-100 text-navy-700">
-          <span className="font-display text-sm">{property.suburb}</span>
+        <div className="relative flex h-36 items-center justify-center bg-navy-100 text-navy-700">
+          {thumbnail ? (
+            <Image src={thumbnail} alt={property.title} fill sizes="400px" className="object-cover" />
+          ) : (
+            <span className="font-display text-sm">{property.suburb}</span>
+          )}
         </div>
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-2">

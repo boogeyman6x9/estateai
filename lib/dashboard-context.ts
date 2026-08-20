@@ -1,12 +1,22 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { isTrialExpired } from "@/lib/subscription";
 import type { Database } from "@/types/database";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Agency = Database["public"]["Tables"]["agencies"]["Row"];
 
-export async function requireAgencyContext(): Promise<{
+/**
+ * `allowExpiredTrial` — pass `true` only from the one place a locked-out
+ * agency still needs to reach: Settings (so they can actually pay). Every
+ * other page/action calls this with the default, so an expired trial gets
+ * redirected to Settings automatically, server-enforced — not just hidden
+ * in the UI.
+ */
+export async function requireAgencyContext(
+  options: { allowExpiredTrial?: boolean } = {}
+): Promise<{
   profile: Profile;
   agency: Agency;
 }> {
@@ -33,6 +43,10 @@ export async function requireAgencyContext(): Promise<{
     .single();
 
   if (!agency) redirect("/onboarding");
+
+  if (!options.allowExpiredTrial && isTrialExpired(agency)) {
+    redirect("/dashboard/settings?trial=expired");
+  }
 
   return { profile, agency };
 }

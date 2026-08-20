@@ -114,13 +114,17 @@ export async function createAgencyAction(
   const parsed = createAgencySchema.safeParse({
     agencyName: formData.get("agencyName"),
     agencySlug: formData.get("agencySlug"),
+    agencyPhone: formData.get("agencyPhone") || undefined,
+    agencyEmail: formData.get("agencyEmail") || undefined,
+    agencyWebsite: formData.get("agencyWebsite") || undefined,
+    agencyAddress: formData.get("agencyAddress") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("create_agency_for_current_user", {
+  const { data: agency, error } = await supabase.rpc("create_agency_for_current_user", {
     agency_name: parsed.data.agencyName,
     agency_slug: parsed.data.agencySlug,
   });
@@ -132,5 +136,23 @@ export async function createAgencyAction(
     return { error: error.message };
   }
 
-  redirect("/dashboard");
+  const { agencyPhone, agencyEmail, agencyWebsite, agencyAddress } = parsed.data;
+  if (agency && (agencyPhone || agencyEmail || agencyWebsite || agencyAddress)) {
+    // Best-effort: the agency itself was already created above (the part that
+    // can't be retried — the RPC blocks a second call once an account has an
+    // agency), so a failure here shouldn't strand the user mid-wizard. They
+    // can fix contact details later from Settings.
+    const { error: contactError } = await supabase
+      .from("agencies")
+      .update({
+        phone: agencyPhone || undefined,
+        email: agencyEmail || undefined,
+        website: agencyWebsite || undefined,
+        address: agencyAddress || undefined,
+      })
+      .eq("id", agency.id);
+    if (contactError) console.error("Failed to save agency contact details", contactError);
+  }
+
+  return { success: true };
 }
