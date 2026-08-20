@@ -34,6 +34,31 @@ export function EmbedSnippetCard({ snippet }: { snippet: string }) {
           <Copy className="h-4 w-4" />
           Copy snippet
         </Button>
+
+        <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">Not sure where to paste it?</p>
+          <ul className="mt-1.5 space-y-1">
+            <li>
+              <span className="font-medium text-foreground">WordPress</span> — Appearance &rarr;
+              Theme File Editor &rarr; <code>footer.php</code>, just before{" "}
+              <code>&lt;/body&gt;</code>. Or use a &quot;header/footer scripts&quot; plugin so it
+              survives theme updates.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Wix / Squarespace / GoDaddy</span> —
+              look for a &quot;Custom Code&quot; or &quot;Embed&quot; setting under site-wide
+              settings — no file editing needed.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Shopify</span> —{" "}
+              <code>theme.liquid</code>, just before <code>&lt;/body&gt;</code>.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Custom HTML site</span> — paste it
+              into every page template right before <code>&lt;/body&gt;</code>.
+            </li>
+          </ul>
+        </div>
       </CardContent>
     </Card>
   );
